@@ -86,4 +86,16 @@ public class NotificationsDbScheme
             public static final String HPSM_WORKGROUP_NAME_DATE_ADDED = "enote_app_hpsm_wg_added";
         }
     }
+
+    //eNotePager table that holds list of active custom notifications
+    public static final class NotificationsCustomTable
+    {
+        public static final String NAME = "enote_custom_notifications";
+
+        public static final class Cols
+        {
+            public static final String CUSTOM_RULE_NAME = "custom_rule_name";
+            public static final String IS_CUSTOM_RULE_ACTIVE = "custom_rule_is_active";
+        }
+    }
 }

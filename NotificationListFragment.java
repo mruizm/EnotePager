@@ -10,6 +10,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Telephony;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
@@ -94,6 +95,12 @@ public class NotificationListFragment extends Fragment
                 FragmentManager manager = getFragmentManager();
                 mShowDialogs.show(manager, DIALOG_DATE);
                 return true;
+            /*case R.id.menu_make_default:
+                final String myPackageName = getContext().getPackageName();
+                    Intent intent_d = new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
+                    intent_d.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, myPackageName);
+                    startActivity(intent_d);
+                return true;*/
             case R.id.menu_all_notifications:
                 Intent launchAllNotifications = new Intent(getContext(), MainAllNotificationActivity.class);
                 launchAllNotifications.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

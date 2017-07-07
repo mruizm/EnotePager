@@ -28,12 +28,12 @@ public class NotificationListActivity extends SingleFragmentActivity
     {
         permissionReadNotifications();
         permissionSmsRead();
-        final String myPackageName = getPackageName();
+        /*final String myPackageName = getPackageName();
         Intent intent =
                 new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT);
         intent.putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME,
                 myPackageName);
-        startActivity(intent);
+        startActivity(intent);*/
         //mEnoteNotificationEvent.showEnoteNotificationActive("eNotePager Active", "EON Notifications Enabled", "");
         //Intent intent=new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
         //startActivity(intent);

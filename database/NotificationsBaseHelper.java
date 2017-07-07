@@ -9,6 +9,7 @@ import com.hpe.rumarco.enotepager.database.NotificationsDbScheme.NotificationsSl
 import com.hpe.rumarco.enotepager.database.NotificationsDbScheme.NotificationsSloTTRArray;
 import com.hpe.rumarco.enotepager.database.NotificationsDbScheme.NotificationsEonArray;
 import com.hpe.rumarco.enotepager.database.NotificationsDbScheme.NotificationsSoundActive;
+import com.hpe.rumarco.enotepager.database.NotificationsDbScheme.NotificationsCustomTable;
 import com.hpe.rumarco.enotepager.database.NotificationsDbScheme.HpSmWorkgroupList;
 
 //Class that creates and updates sqlite db and tables when application is installed or updated
@@ -87,6 +88,21 @@ public class NotificationsBaseHelper extends SQLiteOpenHelper
                 HpSmWorkgroupList.Cols.HPSM_WORKGROUP_NAME +  ", " +
                 HpSmWorkgroupList.Cols.HPSM_WORKGROUP_NAME_DATE_ADDED +")");
 
+        //Create the sqlite database for custom notifications management
+        db.execSQL("create table " + NotificationsCustomTable.NAME + "("  + " _id integer primary key autoincrement, " +
+                NotificationsCustomTable.Cols.CUSTOM_RULE_NAME + ", " +
+                NotificationsCustomTable.Cols.IS_CUSTOM_RULE_ACTIVE + ")");
+
+        db.execSQL("insert into " + NotificationsCustomTable.NAME + "(" + NotificationsCustomTable.Cols.CUSTOM_RULE_NAME + ","
+                + NotificationsCustomTable.Cols.IS_CUSTOM_RULE_ACTIVE + ") values('REMEDY_RULE','0')");
+        db.execSQL("insert into " + NotificationsCustomTable.NAME + "(" + NotificationsCustomTable.Cols.CUSTOM_RULE_NAME + ","
+                + NotificationsCustomTable.Cols.IS_CUSTOM_RULE_ACTIVE + ") values('CHANGE_RULE','0')");
+        db.execSQL("insert into " + NotificationsCustomTable.NAME + "(" + NotificationsCustomTable.Cols.CUSTOM_RULE_NAME + ","
+                + NotificationsCustomTable.Cols.IS_CUSTOM_RULE_ACTIVE + ") values('UNASSIGNED_RULE','0')");
+        db.execSQL("insert into " + NotificationsCustomTable.NAME + "(" + NotificationsCustomTable.Cols.CUSTOM_RULE_NAME + ","
+                + NotificationsCustomTable.Cols.IS_CUSTOM_RULE_ACTIVE + ") values('ESCALATION_RULE','0')");
+
+
     }
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
@@ -105,6 +121,10 @@ public class NotificationsBaseHelper extends SQLiteOpenHelper
         db.execSQL("create table " + HpSmWorkgroupList.NAME + "("  + " _id integer primary key autoincrement, " +
                 HpSmWorkgroupList.Cols.HPSM_WORKGROUP_NAME +  ", " +
                 HpSmWorkgroupList.Cols.HPSM_WORKGROUP_NAME_DATE_ADDED +")");
+        //Create the sqlite database for custom notifications management
+        /*db.execSQL("create table " + NotificationsCustomTable.NAME + "("  + " _id integer primary key autoincrement, " +
+                NotificationsCustomTable.Cols.CUSTOM_RULE_NAME + ", " +
+                NotificationsCustomTable.Cols.IS_CUSTOM_RULE_ACTIVE + ")");*/
         //db.execSQL("insert into " + HpSmWorkgroupList.NAME + "(" + HpSmWorkgroupList.Cols.HPSM_WORKGROUP_NAME + ") values('0')");
     }
 }

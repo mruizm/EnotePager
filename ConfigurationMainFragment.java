@@ -197,6 +197,11 @@ public class ConfigurationMainFragment extends Fragment
                 launchNotificationWorkgroup.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(launchNotificationWorkgroup);
                 return true;
+            case R.id.menu_configuration_custom_notif:
+                Intent launchNotificationCustom = new Intent(getContext(), CustomSmsPatternMainActivity.class);
+                launchNotificationCustom.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(launchNotificationCustom);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }

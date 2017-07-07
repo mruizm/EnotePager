@@ -2,10 +2,11 @@ package com.hpe.rumarco.enotepager.database;
 
 import android.database.Cursor;
 import android.database.CursorWrapper;
-import com.hpe.rumarco.enotepager.EnoteAddWorkGroupQueryToObject;
+
 import com.hpe.rumarco.enotepager.EnoteNotificationArrayObject;
 import com.hpe.rumarco.enotepager.EnoteNotificationObject;
 import com.hpe.rumarco.enotepager.EnoteWorkGroupObject;
+import com.hpe.rumarco.enotepager.EnoteNotificationCustomObject;
 
 /**
  * Created by rumarco on 09/12/2016.
@@ -84,5 +85,16 @@ public class NotificationCursorWrapper extends CursorWrapper{
         workgroup_name.setHpSmWgName(hpsm_wg_name);
 
         return workgroup_name;
+    }
+
+    public EnoteNotificationCustomObject getCustomNotificationsIsActive()
+    {
+        String custome_rule_name = getString(getColumnIndex(NotificationsDbScheme.NotificationsCustomTable.Cols.CUSTOM_RULE_NAME));
+        String is_custome_rule_active = getString(getColumnIndex(NotificationsDbScheme.NotificationsCustomTable.Cols.IS_CUSTOM_RULE_ACTIVE));
+
+        EnoteNotificationCustomObject custom_notification_entry = new EnoteNotificationCustomObject();
+        custom_notification_entry.setCustomRuleName(custome_rule_name);
+        custom_notification_entry.setIsCustomRuleActive(is_custome_rule_active);
+        return custom_notification_entry;
     }
 }

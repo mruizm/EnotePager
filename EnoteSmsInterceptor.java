@@ -7,6 +7,12 @@
 'KPMI : N-IM17207085 (Priority 4) - TTO deadline' : 'N-INCSSP-GDO-GPS'
 'BAKM : N-IM17207085 (Priority 4) - TTIR deadline' : 'N-INCSSP-GDO-GPS'
 eNote PROD-AMS Action Required:
+Alfonso Garbanzo requirements:
+Remedy Incident Assignment Ticket # IM13061954 has been assigned toais security - mainframe and Severity 3
+Remedy Incident Assignment Ticket # IM13061954 has been assigned toais security - mainframe and Severity 3 RTOP
+EMERGENCY CHANGE REQUEST CM1044042 HAS BEEN OPENED TO ais security - mainframe
+** ESCALATION ** Remedy Incident Ticket # IM12345678 needs immediateattention!
+Alert - There Are Unassigned Tickets - Automation - Alert - There Are Unassigned Tickets Tickets: 4 - P1/P2 Included
 */
 //v1.0.1    Added feature to not display SMS notification if eNote pattern found but not within matrix
 //          Show notification if SMS pattern different than eNote's pattern
@@ -45,6 +51,7 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
     String enotepager_sound_active = "";
     String enotepager_wg_hpsm = "";
     String whereClause = "";
+    String customer_rules_active;
 
     @Override
     public void onReceive(final Context context, Intent intent) {
@@ -58,6 +65,7 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
         am.setStreamVolume(AudioManager.STREAM_MUSIC, seventyVolume, 0);
         EnoteNotificationSetupQueryToObject enoteNotificationSetupQueryToObject = EnoteNotificationSetupQueryToObject.get(context1);
         EnoteAddWorkGroupQueryToObject enoteAddWorkGroupQueryToObject = EnoteAddWorkGroupQueryToObject.get(context1);
+        EnoteNotificationCustomQueryToObject enoteNotificationCustomQueryToObject = EnoteNotificationCustomQueryToObject.get(context1);
 
         //EnoteNotificationSetupQueryToObject enoteNotificationSetupEonSm = EnoteNotificationSetupQueryToObject.get(context1);
         List<EnoteNotificationArrayObject> enotenotification_array;
@@ -65,14 +73,27 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
         List<EnoteNotificationArrayObject> enotenotification_sound_active;
         List<EnoteWorkGroupObject> enotenotification_hpsm_acive_wg_array;
 
+        List<EnoteNotificationCustomObject> enotenotification_custom_notif;
+
         //Boolean variables used to determine funcionality of eNotePager
         boolean sound_alert_sm = false;
         boolean sound_alert_eon = false;
+        boolean sound_alert_remedy = false;
+        boolean sound_alert_escalation = false;
+        boolean sound_alert_change = false;
+        boolean sound_alert_unassigned = false;
+
         boolean eon_boolean_receive_notification = false;
         boolean sm_boolean_receive_notification = false;
         boolean enotepager_sound_active_bool = false;
         boolean sm_boolean_wg_is_acive = false;
         boolean sm_pattern_at_least_matched = false;
+
+        boolean remedy_boolean_received_notif = false;
+        boolean change_boolean_received_notif = false;
+        boolean unassiged_boolean_received_notif = false;
+        boolean escalation_boolean_received_notif = false;
+
 
         //StringTokenizer used to decompose configuration values
         StringTokenizer st;         //To decompose slo_type obtained from SMS
@@ -81,9 +102,14 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
 
         final EnoteNotificationObject mReceivedNotification = new EnoteNotificationObject();
         //Pattern notification_pattern = Pattern.compile("\'([\\w\\s]+)\\s+:\\s+([\\w|\\d|-]+)\\s+\\(([\\w|\\s\\d]+)\\)\\s+-\\s+([\\w|\\d|\\s]+)\'\\s+:\\s+\'([\\w|\\d|-]+)\'");
-        Pattern notification_pattern = Pattern.compile("\'([\\w\\s]+)\\s+:\\s+([\\w|\\d|-]+[\\d]+?)\\s+\\(([\\w|\\s\\d]+)\\)\\s+-\\s+([\\w|\\d|\\s]+)'\\s+:\\s+'([\\w|\\d|-]+)\'");
+        Pattern notification_pattern = Pattern.compile("\\\\?\'([\\w\\s]+)\\s+:\\s+([\\w|\\d|-]+[\\d]+?)\\s+\\(([\\w|\\s\\d]+)\\)\\s+-\\s+([\\w|\\d|\\s]+)\\\\?'\\s+:\\s+\\\\?'([\\w|\\d|-]+)\\\\?\'");
         //Pattern eon_notification_patter = Pattern.compile("eNote PROD-AMS Action Required.*\\s+?;\\s+?VRU Event Number:\\s+?(\\d+)\\s+?.*CI:\\s+([\\s\\d]+).*");
         Pattern eon_notification_patter = Pattern.compile("eNote PROD-AMS Action Required:.*;.*VRU Event Number:\\s+(\\d+)\\s?;.*CI:\\s?([\\d\\w]+)");
+
+        Pattern remedy_pattern = Pattern.compile("Remedy Incident Assignment Ticket #\\s+(IM\\d+) has been assigned to\\s?(ais security - mainframe) and (.*)");
+        Pattern escalation_pattern = Pattern.compile("\\*\\*\\s?(ESCALATION)\\s?\\*\\*\\s?(Remedy)\\s?Incident\\s?Ticket\\s?#\\s?(IM\\d+)\\s?needs\\s?immediate\\s?attention!");
+        Pattern change_pattern = Pattern.compile("EMERGENCY\\s?CHANGE\\s?REQUEST\\s?(.*)\\s?HAS\\s?BEEN\\s?OPENED\\s?TO\\s?(ais\\s?security\\s?-\\s?mainframe)");
+        Pattern unassigned_patter = Pattern.compile("Alert\\s?-\\s?There\\s[a|A]re\\s?[u|U]nassigned\\s?[t|T]ickets\\s?Tickets:\\s?(\\d+)\\s?-\\s?(.*)\\s[i|I]ncluded");
 
         //Init sqlite database from query operations (in/out data)
         mDatabase = new NotificationsBaseHelper(context1).getWritableDatabase();
@@ -119,6 +145,29 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
             }
         }
 
+        enotenotification_custom_notif = enoteNotificationCustomQueryToObject.getEnoteNotificationCustomActive(null);
+        for (EnoteNotificationCustomObject n_custom: enotenotification_custom_notif)
+        {
+            customer_rules_active = n_custom.getCustomRuleName() + ";" + n_custom.getIsCustomRuleActive();
+            Log.d("REMEDY_RULE", customer_rules_active);
+            if(customer_rules_active.equals("REMEDY_RULE;1"))
+            {
+                remedy_boolean_received_notif = true;
+            }
+            if(customer_rules_active.equals("CHANGE_RULE;1"))
+            {
+                change_boolean_received_notif = true;
+            }
+            if(customer_rules_active.equals("UNASSIGNED_RULE;1"))
+            {
+                unassiged_boolean_received_notif = true;
+            }
+            if(customer_rules_active.equals("ESCALATION_RULE;1"))
+            {
+                escalation_boolean_received_notif = true;
+            }
+        }
+
         //if(intent.getAction().equals("android.provider.Telephony.SMS_RECEIVED")){
             final EnoteNotificationEvent mEnoteNotificationEvent = new EnoteNotificationEvent(context1);
             Bundle bundle = intent.getExtras();
@@ -133,10 +182,14 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
                         msg_body = msgs[i].getMessageBody();
                         Matcher pattern_matcher = notification_pattern.matcher(msg_body);
                         Matcher pattern_matcher_eon = eon_notification_patter.matcher(msg_body);
+                        Matcher pattern_matcher_remedy = remedy_pattern.matcher(msg_body);
+                        Matcher pattern_matcher_escalation = escalation_pattern.matcher(msg_body);
+                        Matcher pattern_matcher_change = change_pattern.matcher(msg_body);
+                        Matcher pattern_matcher_unassigned = unassigned_patter.matcher(msg_body);
 
                         //Process SMS if match eNote SMS notification
                         if (pattern_matcher.find()){
-                            this.abortBroadcast();
+                            //this.abortBroadcast();
                             //Valid message, now send it to DB maybe? or just log it for now
                             String tolog = "Log: ["+getreadabledate()+"] New Message: "+msg_body+"\n";
                             Log.d("GotSm",tolog);
@@ -271,7 +324,7 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
                         }
                         if (pattern_matcher_eon.find())
                         {
-                            this.abortBroadcast();
+                            //this.abortBroadcast();
                             String tolog = "Log: ["+getreadabledate()+"] New Message: "+msg_body+"\n";
                             Log.d("GotEON",tolog);
                             String eon_vru_number = pattern_matcher_eon.group(1);
@@ -299,6 +352,162 @@ public class EnoteSmsInterceptor extends BroadcastReceiver {
                             if(sound_alert_eon)
                             {
                                 mEnoteNotificationEvent.showEnoteNotification("New EON Escalation!", mReceivedNotification.getIncidentSloType()+":", mReceivedNotification.getIncidentSloPercent(), mReceivedNotification.getIncidentPriority()+":", mReceivedNotification.getIncidentId());
+                                if (enotepager_sound_active_bool)
+                                {
+                                    if (mMusicPlayer == null) {
+                                        mMusicPlayer = SoundNotification.getInstance(context1);
+                                    }
+                                    mMusicPlayer.play();
+                                }
+                            }
+                        }
+
+                        if (pattern_matcher_remedy.find())
+                        {
+                            String tolog = "Log: ["+getreadabledate()+"] New Message: "+msg_body+"\n";
+                            Log.d("GotRemedy",tolog);
+                            String remedy_ticket_id = pattern_matcher_remedy.group(1);
+                            String remedy_team = pattern_matcher_remedy.group(2);
+                            String remedy_sev = pattern_matcher_remedy.group(3);
+                            Log.d("GotRemedy",remedy_ticket_id);
+                            Log.d("GotRemedy",remedy_team);
+                            Log.d("GotRemedy",remedy_sev);
+                            mReceivedNotification.setIncidentPriority(remedy_sev);
+                            mReceivedNotification.setIncidentId(remedy_ticket_id);
+                            mReceivedNotification.setIncidentSloType("New");
+                            mReceivedNotification.setIncidentSloPercent("Remedy");
+                            mReceivedNotification.setIncidentCustomer("Team");
+                            mReceivedNotification.setIncidentWorkGroup(remedy_team);
+                            mReceivedNotification.setIncidentAck("NO_ACK");
+
+                            Log.d("EON_NotificationAdded",tolog);
+                            //Insert EnoteNotificationObject values into sqlite database
+                            ContentValues values = getContentValues(mReceivedNotification);
+
+
+                            if(remedy_boolean_received_notif)
+                            {
+                                mDatabase.insert(NotificationsDbScheme.NotificationsTable.NAME, null, values);
+                                sound_alert_remedy = true;
+                            }
+                            if(sound_alert_remedy)
+                            {
+                                mEnoteNotificationEvent.showEnoteNotification("New Remedy Ticket!", "", "", "", "");
+                                if (enotepager_sound_active_bool)
+                                {
+                                    if (mMusicPlayer == null) {
+                                        mMusicPlayer = SoundNotification.getInstance(context1);
+                                    }
+                                    mMusicPlayer.play();
+                                }
+                            }
+                        }
+
+                        if (pattern_matcher_escalation.find())
+                        {
+                            String tolog = "Log: ["+getreadabledate()+"] New Message: "+msg_body+"\n";
+                            Log.d("GotEscalation",tolog);
+                            String escalation_title = pattern_matcher_escalation.group(1);
+                            String escalation_tid_id = pattern_matcher_escalation.group(3);
+                            Log.d("GotEscalation",escalation_title);
+                            mReceivedNotification.setIncidentPriority("INC");
+                            mReceivedNotification.setIncidentId(escalation_tid_id);
+                            mReceivedNotification.setIncidentSloType("New");
+                            mReceivedNotification.setIncidentSloPercent(escalation_title);
+                            mReceivedNotification.setIncidentCustomer("WorkFlow");
+                            mReceivedNotification.setIncidentWorkGroup("Remedy");
+                            mReceivedNotification.setIncidentAck("NO_ACK");
+
+                            Log.d("Esc_NotificationAdded",tolog);
+                            //Insert EnoteNotificationObject values into sqlite database
+                            ContentValues values = getContentValues(mReceivedNotification);
+
+
+                            if(escalation_boolean_received_notif)
+                            {
+                                mDatabase.insert(NotificationsDbScheme.NotificationsTable.NAME, null, values);
+                                sound_alert_escalation = true;
+                            }
+                            if(sound_alert_escalation)
+                            {
+                                mEnoteNotificationEvent.showEnoteNotification("New Remedy Escalation!", "", "", "", "");
+                                if (enotepager_sound_active_bool)
+                                {
+                                    if (mMusicPlayer == null) {
+                                        mMusicPlayer = SoundNotification.getInstance(context1);
+                                    }
+                                    mMusicPlayer.play();
+                                }
+                            }
+                        }
+
+                        if (pattern_matcher_change.find())
+                        {
+                            String tolog = "Log: ["+getreadabledate()+"] New Message: "+msg_body+"\n";
+                            Log.d("GotChange",tolog);
+                            String chg_id = pattern_matcher_change.group(1);
+                            String chg_team = pattern_matcher_change.group(2);
+                            Log.d("GotChange",chg_id);
+                            mReceivedNotification.setIncidentPriority("CHG");
+                            mReceivedNotification.setIncidentId(chg_id);
+                            mReceivedNotification.setIncidentSloType("New");
+                            mReceivedNotification.setIncidentSloPercent("Emergency Change");
+                            mReceivedNotification.setIncidentCustomer("Team");
+                            mReceivedNotification.setIncidentWorkGroup(chg_team);
+                            mReceivedNotification.setIncidentAck("NO_ACK");
+
+                            Log.d("GotChange",tolog);
+                            //Insert EnoteNotificationObject values into sqlite database
+                            ContentValues values = getContentValues(mReceivedNotification);
+
+
+                            if(change_boolean_received_notif)
+                            {
+                                mDatabase.insert(NotificationsDbScheme.NotificationsTable.NAME, null, values);
+                                sound_alert_change = true;
+                            }
+                            if(sound_alert_change)
+                            {
+                                mEnoteNotificationEvent.showEnoteNotification("New Emergency Change!", "", "", "", "");
+                                if (enotepager_sound_active_bool)
+                                {
+                                    if (mMusicPlayer == null) {
+                                        mMusicPlayer = SoundNotification.getInstance(context1);
+                                    }
+                                    mMusicPlayer.play();
+                                }
+                            }
+                        }
+
+                        if (pattern_matcher_unassigned.find())
+                        {
+                            String tolog = "Log: ["+getreadabledate()+"] New Message: "+msg_body+"\n";
+                            Log.d("GotUn",tolog);
+                            String unassign_num = pattern_matcher_unassigned.group(1);
+                            String unassign_prio = pattern_matcher_unassigned.group(2);
+                            Log.d("GotUn",unassign_num);
+                            Log.d("GotUn",unassign_prio);
+                            mReceivedNotification.setIncidentPriority("INC");
+                            mReceivedNotification.setIncidentId(unassign_prio);
+                            mReceivedNotification.setIncidentSloType("New");
+                            mReceivedNotification.setIncidentSloPercent("Unassigned");
+                            mReceivedNotification.setIncidentCustomer("Ticket Count");
+                            mReceivedNotification.setIncidentWorkGroup(unassign_num);
+                            mReceivedNotification.setIncidentAck("NO_ACK");
+
+                            Log.d("GotUn",tolog);
+                            //Insert EnoteNotificationObject values into sqlite database
+                            ContentValues values = getContentValues(mReceivedNotification);
+
+
+                            if(unassiged_boolean_received_notif)
+                            {
+                                mDatabase.insert(NotificationsDbScheme.NotificationsTable.NAME, null, values);
+                                sound_alert_unassigned = true;
+                            }
+                            if(sound_alert_unassigned)
+                            {
+                                mEnoteNotificationEvent.showEnoteNotification("New Unassigned Tickets!", "", "", "", "");
                                 if (enotepager_sound_active_bool)
                                 {
                                     if (mMusicPlayer == null) {

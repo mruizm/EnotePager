@@ -3,19 +3,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.Fragment;
 /**
- * Created by rumarco on 16/12/2016.
+ * Created by rumarco on 14 jun 2017.
  */
 
-public class ConfigurationMainActivity extends SingleFragmentConfigurationMainActivity {
+public class CustomSmsPatternMainActivity extends SingleFragmentConfigurationCustomSmsMainActivity {
     public static Intent newIntent(Context context)
     {
-        return new Intent(context, ConfigurationMainActivity.class);
+        return new Intent(context, CustomSmsPatternMainActivity.class);
     }
 
     @Override
     protected Fragment createFragment()
     {
-        return new ConfigurationMainFragment();
+        return new CustomSmsPatternMainFragment();
     }
 }
-
